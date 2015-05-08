@@ -116,11 +116,10 @@ static void
 usage(void)
 {
 	fprintf(stderr, "usage:\n");
-	fprintf(stderr, "  aguri [-adhPv] [-c count] [-i interface] [-g geometry]\n");
-	fprintf(stderr, "        [-f filter_cmd] [-l nodes] [-n nentries]\n");
-	fprintf(stderr, "        [-p pid_file] [-r dumpfile] [-s interval]\n");
-	fprintf(stderr, "        [-t thresh/1000] [-w outputfile] [-x sdSD]\n");
-	fprintf(stderr, "        [-y KM] [inputfile...]\n");
+	fprintf(stderr, "  aguri2 [-dhv] [-c count] [-i interface]\n");
+	fprintf(stderr, "        [-f filter_cmd] [-l nodes]\n");
+	fprintf(stderr, "        [-p pid_file] [-r pcapfile] [-s interval]\n");
+	fprintf(stderr, "        [-T timeoffset] [-t thresh/1000] [-w outputfile]\n");
 	exit(1);
 }
 
