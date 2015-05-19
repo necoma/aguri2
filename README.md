@@ -19,6 +19,9 @@ https://github.com/necoma/agurim/
 	% make
 	% sudo make install
 
+To run aguri2 and archive its outputs, use 'scripts/agurify2.sh'.
+See 'scripts/README.md' for more detail.
+
 ## Usage
 
 	aguri2 [-dhv] [-c count] [-i interface] [-f pcapfilters] [-l nodes]

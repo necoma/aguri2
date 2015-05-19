@@ -69,10 +69,10 @@ To read from a socket for NetFlow or sFlow:
 ## Examples
 
 To run agurify2.sh for netflow, and archive logs every 10 minutes,
-set the following entry in the crontab.
+set the following entry in the crontab, assuming 'datadir=/export/aguri2' and 'interval=60':
 
-	*/10 * * * * /script_path/agurify2.sh -t netflow -p 2055 -d /export/aguri2 2>&1
+	*/10 * * * * /script_path/agurify2.sh -t netflow -p 2055 -d /export/aguri2 -s 60 2>&1
 
 Similary, for reading from interface 'em0' using pcap,
 
-	*/10 * * * * /script_path/agurify2.sh -i em0 -d /export/aguri2 2>&1
+	*/10 * * * * /script_path/agurify2.sh -i em0 -d /export/aguri2 -s 60 2>&1
