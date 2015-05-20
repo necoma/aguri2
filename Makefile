@@ -1,4 +1,5 @@
 PREFIX?=	/usr/local
+INSTALL?=	/usr/bin/install
 AGURIDIR?=	$(PREFIX)/lib/aguri
 
 PROG=	aguri2
@@ -16,7 +17,7 @@ LIBS=		$(SYS_LIBS) -lpcap
 all: $(PROG)
 
 install: $(PROG)
-	$(INSTALL) $(COPY) -m 0755 $(PROG) $(PREFIX)/bin
+	$(INSTALL) -m 0755 $(PROG) $(PREFIX)/bin
 
 aguri2: $(OBJS)
 	$(CC) $(CFLAGS) $(INCLUDES) $(DEFINES) -o $@ $(OBJS) $(LIBS)
