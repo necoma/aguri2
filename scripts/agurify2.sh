@@ -119,8 +119,8 @@ filename="${year}${month}${day}.${hour}${min}${sec}.agr"
 
 echo "moving ${logdir}/${tmpfile} to ${logdir}/${year}${month}/${year}${month}${day}/${filename}" 1>&2
 
-mkdir -p ${logdir}/${year}${month}
-mkdir -p ${logdir}/${year}${month}/${year}${month}${day}
+mkdir -p -m 775 ${logdir}/${year}${month}
+mkdir -p -m 775 ${logdir}/${year}${month}/${year}${month}${day}
 mv -f ${logdir}/${tmpfile} ${logdir}/${year}${month}/${year}${month}${day}/${filename}
 
 exit 0
