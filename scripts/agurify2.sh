@@ -83,15 +83,15 @@ if [ "X${running}" = "X" ]; then
     fi
 
     # setup the command to execute
+    opttimeoffset=""
+    if [ "X${timeoffset}" != "X" ]; then
+	opttimeoffset="-T ${timeoffset}"
+    fi
+
     if [ "X${flowtype}" = "X" ]; then
-	cmd="${aguri2} -w ${logdir}/${logfile} -i ${interface} -s ${interval} -p ${pidfile}"
+	cmd="${aguri2} -w ${logdir}/${logfile} -i ${interface} -s ${interval} -p ${pidfile} ${opttimeoffset}"
     else
 	# use aguri2_xflow to read netflow or sflow
-	opttimeoffset=""
-	if [ "X${timeoffset}" != "X" ]; then
-	    opttimeoffset="-T ${timeoffset}"
-	fi
-
 	cmd="${aguri2_xflow} -t ${flowtype} -p ${port} | ${aguri2} -w ${logdir}/${logfile} -s ${interval} -p ${pidfile} ${opttimeoffset}"
     fi
 
