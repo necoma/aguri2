@@ -41,11 +41,11 @@ traffic.
 
 To read from pcap, run this script from cron(8) every 10 minutes:
 
-	agurify2.sh -i <ifname> [-d logdir] [-s interval] [-f pidfile]
+	agurify2.sh -i <ifname> [-d logdir] [-s interval] [-f pidfile] [-T timeoffset] [-v]
 
 To read from a socket for NetFlow or sFlow:
 
-	agurify2.sh -t netflow|sflow [-p port] [-d logdir] [-s interval] [-f pidfile]
+	agurify2.sh -t netflow|sflow [-p port] [-d logdir] [-s interval] [-f pidfile] [-T timeoffset] [-v]
 
   + `-i interface`:  
     Listen on interface using BPF.
@@ -65,6 +65,12 @@ To read from a socket for NetFlow or sFlow:
 
   + `-t netflow|sflow`:  
     Specify the flow type, either 'netflow' or 'sflow'.
+
+  + `-T timeoffset`:  
+    Add timeoffset (integer in hour) to the localtime. This can be
+    used to set the time in the output to another timezone.
+
+  + `-v`: Enable the verbose mode.
 
 ## Examples
 

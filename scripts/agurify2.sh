@@ -25,11 +25,12 @@ interface=""	# interface name for reading from pcap
 flowtype="" 	# 'netflow' or 'sflow'
 port="6343"	# port number for socket, e.g., 6343
 timeoffset=""	# time offset
+verbose=false
 
 umask 022
 
 # process arguments
-while getopts "d:f:i:p:s:t:T:" opt; do
+while getopts "d:f:i:p:s:t:T:v" opt; do
     case $opt in
 	"d" ) logdir="$OPTARG" ;;
 	"f" ) pidfile="$OPTARG" ;;
@@ -38,6 +39,7 @@ while getopts "d:f:i:p:s:t:T:" opt; do
 	"s" ) interval="$OPTARG" ;;
 	"t" ) flowtype="$OPTARG" ;;
 	"T" ) timeoffset="$OPTARG" ;;
+	"v" ) verbose=true
 	* ) echo "Usage: agurify2.sh [-i ifname] [-t netflow|sflow] [-d logdir] [-p port] [-s interval]" 1>&2
 	    exit 1 ;;
     esac
@@ -96,7 +98,7 @@ if [ "X${running}" = "X" ]; then
     fi
 
     # run the command in background, and then, exit
-    echo "exec cmd: ${cmd}" 1>&2
+    ${verbose} && echo "exec cmd: ${cmd}" 1>&2
     eval "${cmd} &>/dev/null &"
     exit $?
 fi
@@ -124,7 +126,7 @@ sec=$6
 
 filename="${year}${month}${day}.${hour}${min}${sec}.agr"
 
-echo "moving ${logdir}/${tmpfile} to ${logdir}/${year}${month}/${year}${month}${day}/${filename}" 1>&2
+${verbose} && echo "moving ${logdir}/${tmpfile} to ${logdir}/${year}${month}/${year}${month}${day}/${filename}" 1>&2
 
 mkdir -p -m 775 ${logdir}/${year}${month}
 mkdir -p -m 775 ${logdir}/${year}${month}/${year}${month}${day}
