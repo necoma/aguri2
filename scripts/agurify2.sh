@@ -24,11 +24,12 @@ logfile="log.agr"
 interface=""	# interface name for reading from pcap
 flowtype="" 	# 'netflow' or 'sflow'
 port="6343"	# port number for socket, e.g., 6343
+timeoffset=""	# time offset
 
 umask 022
 
 # process arguments
-while getopts "d:f:i:p:s:t:" opt; do
+while getopts "d:f:i:p:s:t:T:" opt; do
     case $opt in
 	"d" ) logdir="$OPTARG" ;;
 	"f" ) pidfile="$OPTARG" ;;
@@ -36,6 +37,7 @@ while getopts "d:f:i:p:s:t:" opt; do
 	"p" ) port="$OPTARG" ;;
 	"s" ) interval="$OPTARG" ;;
 	"t" ) flowtype="$OPTARG" ;;
+	"T" ) timeoffset="$OPTARG" ;;
 	* ) echo "Usage: agurify2.sh [-i ifname] [-t netflow|sflow] [-d logdir] [-p port] [-s interval]" 1>&2
 	    exit 1 ;;
     esac
@@ -85,7 +87,12 @@ if [ "X${running}" = "X" ]; then
 	cmd="${aguri2} -w ${logdir}/${logfile} -i ${interface} -s ${interval} -p ${pidfile}"
     else
 	# use aguri2_xflow to read netflow or sflow
-	cmd="${aguri2_xflow} -t ${flowtype} -p ${port} | ${aguri2} -w ${logdir}/${logfile} -s ${interval} -p ${pidfile}"
+	opttimeoffset=""
+	if [ "X${timeoffset}" != "X" ]; then
+	    opttimeoffset="-T ${timeoffset}"
+	fi
+
+	cmd="${aguri2_xflow} -t ${flowtype} -p ${port} | ${aguri2} -w ${logdir}/${logfile} -s ${interval} -p ${pidfile} ${opttimeoffset}"
     fi
 
     # run the command in background, and then, exit
