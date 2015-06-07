@@ -7,7 +7,7 @@ NetFlow records.
 aguri2_xflow reads sFlow or NetFlow from a UDP socket, translate the
 input records to the aguri_flow_records, and write them to the
 standard output.
-sFlow (version 5) and NetFlow (version 5 and 9) are supported.
+sFlow (version 4 and 5) and NetFlow (version 5 and 9) are supported.
 
 ## Install
 

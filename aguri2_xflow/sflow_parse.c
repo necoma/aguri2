@@ -90,10 +90,6 @@ parse_sflow_datagram(const char *bp, int len)
 {
 	const char *p = bp;
 	u_int32_t addr_type, agent_id = 0, seqno, uptime, nrecords;
-#if 0
-	struct in_addr  addr4;
-	struct in6_addr addr6;
-#endif
 	int	i;
 
 	timestamp = time(NULL);	/* timestamp for this sflow datagram */
@@ -101,8 +97,10 @@ parse_sflow_datagram(const char *bp, int len)
 
 	/* sflow datagram header */
 	sflow_version 	= buffer_read_4(&p);
-	if (sflow_version != 4 && sflow_version != 5)
-		errx(1, "unkonwn sflow version 0x%x", sflow_version);
+	if (sflow_version != 4 && sflow_version != 5) {
+		warnx("unkonwn sflow version 0x%x", sflow_version);
+		return (len);
+	}
 	addr_type = buffer_read_4(&p);
 	switch (addr_type) {
 	case 1: /* IPv4 */
@@ -130,8 +128,14 @@ parse_sflow_datagram(const char *bp, int len)
 	for (i = 0; i < nrecords; i++) {
 		if (sflow_version >= 5)
 			parse_sflow5(&p);
-		else
-			parse_sflow4_sample(&p);
+		else {
+			if (parse_sflow4_sample(&p) < 0) {
+				/* if parsing failed for v4, give up */
+				if (verbose > 0)
+					fprintf(stderr, "parse_sflow4 failed\n");
+				break;
+			}
+		}
 	}
 
 	return (len);
@@ -140,8 +144,195 @@ parse_sflow_datagram(const char *bp, int len)
 int
 parse_sflow4_sample(const char **p)
 {
-	errx(1, "sflow v4 deprecated");
-	return (-1);
+	u_int32_t sample_type, packetdata_type;
+	u_int32_t seqno, src_id, srate, total, drops, input, output;
+	u_int32_t protocol, framelen, snaplen;
+	u_int32_t interval, counters_version;
+	u_int32_t nextended, extended_type, addr_type;
+	u_int32_t aspath_len, asn_len, community_len, str_len;
+	int i;
+
+	sample_type	= buffer_read_4(p);
+	if (verbose > 1)
+		fprintf(stderr, "sflow4: sample_type:%u\n", sample_type);
+	switch (sample_type) {
+	case 1: /* flow sample */
+		seqno 	= buffer_read_4(p);
+		src_id 	= buffer_read_4(p);
+		srate 	= buffer_read_4(p);
+		total 	= buffer_read_4(p);
+		drops 	= buffer_read_4(p);
+		input 	= buffer_read_4(p);
+		output 	= buffer_read_4(p);
+
+		sampling_rate = srate;
+		
+		packetdata_type	= buffer_read_4(p);
+		if (verbose > 1)
+			fprintf(stderr, "flow_sample: packetdata_type:%u, srate:%u\n",
+				packetdata_type, srate);
+
+		switch (packetdata_type) {
+		case 1: /* header */
+			protocol = buffer_read_4(p);
+			framelen = buffer_read_4(p);
+			snaplen  = buffer_read_4(p);
+
+			if (verbose > 0)
+				fprintf(stderr, "header: framelen:%u, snaplen:%u, proto:%u\n",
+			    		framelen, snaplen, protocol);
+
+			/* clear aguri_flow to be filled in parsers */
+			memset(&aguri_flow, 0, sizeof(aguri_flow));
+
+			switch (protocol) {
+			case 1: /* ethernet */
+				snapend = *p + snaplen;
+				etherhdr_parse(*p, snaplen);
+				break;
+			default:
+				if (verbose > 0)
+					fprintf(stderr, "unknown proto:%u\n",
+			    			protocol);
+				break;
+			}
+
+			buffer_skip(p, snaplen);
+
+			if (aguri_flow.agflow_fs.fs_ipver != 0) {
+				/* flow info was filled by the parser:
+				 * for frame_length, we remove 4 bytes of FCS
+				 * to be consistent with pcap
+				 */
+				aguri_flow.agflow_packets = htonl(1 * srate);
+				aguri_flow.agflow_bytes = htonl((framelen - 4) * srate);
+				aguri_flow.agflow_first = aguri_flow.agflow_last = htonl((u_int32_t)timestamp);
+
+				if (debug == 0) {
+					if (fwrite(&aguri_flow, sizeof(aguri_flow), 1, stdout) != 1)
+						err(1, "fwrite failed!");
+				} else
+					print_flow(&aguri_flow);
+			}
+			
+			break;
+		case 2: /* IPv4 */
+			buffer_skip(p, 8*4);
+			if (verbose > 0)
+				fprintf(stderr, "packetdata IPv4 not supported\n");
+			break;
+		case 3: /* IPv6 */
+			buffer_skip(p, 14*4);
+			if (verbose > 0)
+				fprintf(stderr, "packetdata IPv6 not supported\n");
+			break;
+		default:
+			if (verbose > 0)
+				fprintf(stderr, "unknown packetdata_type:%u\n", packetdata_type);
+			return (-1);
+		}
+
+		/* extended data */
+		nextended = buffer_read_4(p);
+		if (verbose > 0)
+			fprintf(stderr, "extended data:%u\n", nextended);
+		for (i = 0; i < nextended; i++) {
+			extended_type = buffer_read_4(p);
+			switch (extended_type) {
+			case 1: /* switch */
+				buffer_skip(p, 4*4);
+				break;
+			case 2: /* router */
+				addr_type = buffer_read_4(p);
+				switch (addr_type) {
+				case 1: /* IPv4 */
+					buffer_skip(p, 4);
+					break;
+				case 2: /* IPv6 */
+					buffer_skip(p, 16);
+					break;
+				default:
+					return (-1);
+				}
+				buffer_skip(p, 2*4);
+				break;
+			case 3: /* gateway */
+				buffer_skip(p, 3*4);
+				aspath_len = buffer_read_4(p);
+				while (aspath_len-- > 0) {
+					buffer_skip(p, 4);
+					if (sflow_version >= 4) {
+						asn_len = buffer_read_4(p);
+						while (asn_len-- > 0)
+							buffer_skip(p, 4);
+					}
+				}
+				community_len = buffer_read_4(p);
+				buffer_skip(p, community_len * 4);
+				buffer_skip(p, 4);
+				break;
+			case 4: /* user */
+				str_len = buffer_read_4(p);
+				buffer_skip(p, str_len);
+				str_len = buffer_read_4(p);
+				buffer_skip(p, str_len);
+				break;
+			case 5: /* url */
+				buffer_skip(p, 4);
+				str_len = buffer_read_4(p);
+				buffer_skip(p, str_len);
+				break;
+			default:
+				return (-1);
+			}
+		}
+		break;
+	case 2: /* counter sample */
+		seqno 	= buffer_read_4(p);
+		src_id 	= buffer_read_4(p);
+		interval = buffer_read_4(p);
+		counters_version = buffer_read_4(p);
+		if (verbose > 0)
+			fprintf(stderr, "counter sample: type:%u\n", counters_version);
+		switch (counters_version) {
+		case 1: /* generic */
+			buffer_skip(p, 22*4);
+			break;
+		case 2: /* ethernet */
+			buffer_skip(p, 22*4);
+			buffer_skip(p, 13*4);
+			break;
+		case 3: /* tokenring */
+			buffer_skip(p, 22*4);
+			buffer_skip(p, 18*4);
+			break;
+		case 4: /* fddi */
+			buffer_skip(p, 22*4);
+			break;
+		case 5: /* 100basevg */
+			buffer_skip(p, 22*4);
+			buffer_skip(p, 20*4);
+			break;
+		case 6: /* wan */
+			buffer_skip(p, 22*4);
+			break;
+		case 7: /* vlan */
+			buffer_skip(p, 7*4);
+			break;
+		default:
+			if (verbose > 0)
+				fprintf(stderr, "counter sample %d not supported\n",
+				    counters_version);
+			return (-1);
+		}
+		break;
+	default:
+		if (verbose > 0)
+			fprintf(stderr, "unknown sample_type %u\n", sample_type);
+		return (-1);
+	}
+	
+	return (0);
 }
 
 int

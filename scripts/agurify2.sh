@@ -39,7 +39,7 @@ while getopts "d:f:i:p:s:t:T:v" opt; do
 	"s" ) interval="$OPTARG" ;;
 	"t" ) flowtype="$OPTARG" ;;
 	"T" ) timeoffset="$OPTARG" ;;
-	"v" ) verbose=true
+	"v" ) verbose=true ;;
 	* ) echo "Usage: agurify2.sh [-i ifname] [-t netflow|sflow] [-d logdir] [-p port] [-s interval]" 1>&2
 	    exit 1 ;;
     esac
