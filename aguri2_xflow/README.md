@@ -18,6 +18,16 @@ sFlow (version 4 and 5) and NetFlow (version 5 and 9) are supported.
 
 	aguri2_xflow
 
+  + `-4`:  
+    Use only IPv4.  By default, both IPv4 and IPv6 sockets are used.
+
+  + `-6`:  
+    Use only IPv6.  By default, both IPv4 and IPv6 sockets are used.
+
+  + `-a agent`:  
+    Receive only from the specified agent.  By default, it receives
+    from any agent.
+
   + `-d`:  
     Enable debug, and print human readable outputs instead of binary
     aguri_flow_records.

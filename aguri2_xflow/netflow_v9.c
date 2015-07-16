@@ -57,6 +57,7 @@ struct tp_field {
 };
 
 struct template {
+	int agent_id;
 	int template_id;
 	int source_id;
 	int num_fields;	  /* # of fields */
@@ -76,16 +77,16 @@ LIST_HEAD(tp_head, template) template_head = LIST_HEAD_INITIALIZER(template_head
 
 static int sampling_rate = 1;  /* XXX */
 
-static struct template *get_template(int source_id, int template_id);
+static struct template *get_template(int agent_id, int source_id, int template_id);
 void free_template(struct template *tp);
 
 static struct template *
-get_template(int source_id, int template_id)
+get_template(int agent_id, int source_id, int template_id)
 {
 	struct template *tp;
 	
 	LIST_FOREACH(tp, &template_head, templates) {
-		if (tp->source_id == source_id &&
+		if (tp->agent_id == agent_id && tp->source_id == source_id &&
 			tp->template_id == template_id)
 			break;
 	}
@@ -93,6 +94,7 @@ get_template(int source_id, int template_id)
 		/* allocate a new template */
 		if ((tp = calloc(1, sizeof(struct template))) == NULL)
 			err(1, "calloc");
+		tp->agent_id = agent_id;
 		tp->source_id = source_id;
 		tp->template_id = template_id;
 		LIST_INSERT_HEAD(&template_head, tp, templates);
@@ -143,7 +145,7 @@ nf9_parse_template(const char *bp, size_t len, int source_id)
 			printf("TEMPLATE template_id: %d, template_count: %d\n",
 				template_id, field_count);
 #endif
-		tp = get_template(source_id, template_id);
+		tp = get_template(cur_agentid, source_id, template_id);
 		/* allocate the field table */
 		if (tp->fields != NULL)
 			free(tp->fields);
@@ -212,7 +214,7 @@ nf9_parse_options(const char *bp, size_t len, int source_id)
 			printf("OPTIONS template_id:%d, scope_len:%d option_len:%d\n",
 				template_id, scope_length, option_length);
 #endif
-		tp = get_template(source_id, template_id);
+		tp = get_template(cur_agentid, source_id, template_id);
 		/* allocate the field table */
 		if (tp->fields != NULL)
 			free(tp->fields);
@@ -278,7 +280,7 @@ nf9_parse_data(const char *bp, size_t len, int source_id, uint32_t boottime)
 		printf("DATA FLOWSET: template_id %u, len: %zu\n", 
 			template_id, len);
 #endif
-	tp = get_template(source_id, template_id);
+	tp = get_template(cur_agentid, source_id, template_id);
 
 	dp = (const uint8_t *)&data_header->data[0];
 	len -= 4; /* template_id and length */

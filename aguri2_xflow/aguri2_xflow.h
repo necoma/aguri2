@@ -30,6 +30,7 @@
 extern int	verbose;
 extern int	debug;
 extern int	default_samprate;  /* default sampling rate */
+extern int	cur_agentid;	/* current agent id */
 
 int parse_sflow_datagram(const char *bp, int len);
 int parse_netflow_datagram(const char *bp, int len);
