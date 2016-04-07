@@ -812,7 +812,10 @@ tree_match(struct tree *tp, const void *key, size_t len)
 
 
 /*
- * tnode_match returns the longest match node
+ * tnode_match returns the longest match node.
+ * note: this is not exact "longest match", and may return the node
+ * with longer prefixlen than specified.
+ * currently used only for the agr_flow tree.
  */
 static struct tree_node *
 tnode_match(struct tree *tp, const void *key, size_t len)
@@ -821,13 +824,11 @@ tnode_match(struct tree *tp, const void *key, size_t len)
 
 	np = tp->tr_top;
 	while (1) {
-		if (prefix_cmp(np->tn_key, key, np->tn_prefixlen) != 0) {
-			return (np);
-
+		size_t l = (len < np->tn_prefixlen) ? len : np->tn_prefixlen;
+		if (prefix_cmp(np->tn_key, key, l) != 0) {
 			if (prev != NULL)
 				return (prev);
 			/* the prefix doesn't match (should not happen) */
-			warnx("tnode_match NULL");
 			return (tp->tr_top);
 		}
 
@@ -855,6 +856,10 @@ tnode_match(struct tree *tp, const void *key, size_t len)
 	/* NOTREACHED */
 }
 
+/*
+ * tree_matchindex() is similar to tree_match(), but only matches
+ * nodes with a positive index.
+ */
 struct tree_node *
 tree_matchindex(struct tree *tp, const void *key, size_t len)
 {
@@ -868,7 +873,8 @@ tnode_matchindex(struct tree *tp, const void *key, size_t len)
 
 	np = tp->tr_top;
 	while (1) {
-		if (prefix_cmp(np->tn_key, key, np->tn_prefixlen) != 0) {
+		size_t l = (len < np->tn_prefixlen) ? len : np->tn_prefixlen;
+		if (prefix_cmp(np->tn_key, key, l) != 0) {
 			if (prev != NULL)
 				return (prev);
 			/* the prefix doesn't match */

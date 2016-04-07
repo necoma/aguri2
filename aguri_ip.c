@@ -1191,6 +1191,17 @@ print_protos(struct tree *tp, int saddr_index, int daddr_index,
 		return;
 	}
 
+	if (np->tn_prefixlen < 16) {
+		/* the entry was aggregated beyond the flow level */
+		if (verbose > 0)
+			printf("print_protos: too short! saddr_index:%d daddr_index:%d key[%d %d %d %d] prefixlen=%lu\n",
+				saddr_index, daddr_index,
+				np->tn_key[0], np->tn_key[1], np->tn_key[2], np->tn_key[3],
+				np->tn_prefixlen);
+		printf("\n");
+		return;
+	}
+
 	/* walk through the subtree */
 #if 0
 	printf("  [%d,%d][%d,%d,%d,%d/%d] %"PRIu64" %"PRIu64"\n",
@@ -1202,7 +1213,7 @@ print_protos(struct tree *tp, int saddr_index, int daddr_index,
 	top = np;
 	while (1) {
 		/*
-		 * use the entry if the count is posive,
+		 * use the entry if the count is positive,
 		 * and the node is not aggregated,
 		 */
 		if (np->tn_count != 0 &&
@@ -1223,7 +1234,7 @@ print_protos(struct tree *tp, int saddr_index, int daddr_index,
 			flow_entries[entries].fe_ratio2 = (double)np->tn_count2 / count2;
 			entries++;
 			if (entries == MAX_FE) {
-				warnx("print_protos: MAX_FE");
+				warnx("print_protos: exceeds MAX_FE");
 				break;
 			}
 		}
