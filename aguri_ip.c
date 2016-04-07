@@ -105,6 +105,15 @@ static u_int64_t flow_thscale[33] =
      64, 64, 64, 64, 64, 64, 64, 64,
      64, 64, 64, 64, 64, 64, 64, 64,
      64, 64, 64, 64, 64, 64, 64, 64, 64};
+static u_int64_t no_thscale[129] =
+    {  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+       1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+       1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+       1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+       1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+       1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+       1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+       1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
 
 static void ip_nodename(struct tree_node *np, char *buf, size_t len);
 static u_int64_t ip_addrparser(char *buf, void *key,
@@ -293,38 +302,62 @@ ipinfo_init(void)
 
 	if (addr_src != NULL) {
 		tree_init(addr_src, 32, lru_size);
-		addr_src->tr_thscale = addr_thscale;
+		if (disable_thscale == 0)
+			addr_src->tr_thscale = addr_thscale;
+		else
+			addr_src->tr_thscale = no_thscale;
 	}
 	if (addr6_src != NULL) {
 		tree_init(addr6_src, 128, lru_size);
-		addr6_src->tr_thscale = addr6_thscale;
+		if (disable_thscale == 0)
+			addr6_src->tr_thscale = addr6_thscale;
+		else
+			addr6_src->tr_thscale = no_thscale;
 	}
 	if (addr_dst != NULL) {
 		tree_init(addr_dst, 32, lru_size);
-		addr_dst->tr_thscale = addr_thscale;
+		if (disable_thscale == 0)
+			addr_dst->tr_thscale = addr_thscale;
+		else
+			addr_dst->tr_thscale = no_thscale;
 	}
 	if (addr6_dst != NULL) {
 		tree_init(addr6_dst, 128, lru_size);
-		addr6_dst->tr_thscale = addr6_thscale;
+		if (disable_thscale == 0)
+			addr6_dst->tr_thscale = addr6_thscale;
+		else
+			addr6_dst->tr_thscale = no_thscale;
 	}
 
 	/* fix the lru_size to 512 for protocols */
 	if (proto_src != NULL) {
 		tree_init(proto_src, 8+8+16, 512);
-		proto_src->tr_thscale = proto_thscale;
+		if (disable_thscale == 0)
+			proto_src->tr_thscale = proto_thscale;
+		else
+			proto_src->tr_thscale = no_thscale;
 	}
 	if (proto_dst != NULL) {
 		tree_init(proto_dst, 8+8+16, 512);
-		proto_dst->tr_thscale = proto_thscale;
+		if (disable_thscale == 0)
+			proto_dst->tr_thscale = proto_thscale;
+		else
+			proto_dst->tr_thscale = no_thscale;
 	}
 	/* XXX: agr_flows should be large enough not to get aggregated */
 	if (agr_flows != NULL) {
 		tree_init(agr_flows, 32, 4096 * 4);
-		agr_flows->tr_thscale = flow_thscale;
+		if (disable_thscale == 0)
+			agr_flows->tr_thscale = flow_thscale;
+		else
+			agr_flows->tr_thscale = no_thscale;
 	}
 	if (agr_flows6 != NULL) {
 		tree_init(agr_flows6, 32, 4096 * 4);
-		agr_flows6->tr_thscale = flow_thscale;
+		if (disable_thscale == 0)
+			agr_flows6->tr_thscale = flow_thscale;
+		else
+			agr_flows6->tr_thscale = no_thscale;
 	}
 	return (0);
 }

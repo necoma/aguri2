@@ -62,6 +62,7 @@ int lru_size = 1024;
 int plot_yscale = 1;
 int plot_inbps = 0;
 int verbose = 0;
+int disable_thscale = 0;
 
 static char *dumpfile = NULL;		/* tcpdump output file as input */
 static char *interface = NULL;
@@ -139,7 +140,7 @@ main(int argc, char **argv)
 		type_parser = ipplot_parse1;
 
 	while ((ch = getopt(argc, argv,
-	    "46ac:df:g:hi:l:n:Pp:r:s:T:t:vw:x:y:")) != EOF) {
+	    "46ac:Ddf:g:hi:l:n:Pp:r:s:T:t:vw:x:y:")) != EOF) {
 		switch (ch) {
 		case '4':
 			xflags &= ~(CHECK_IPV6);
@@ -149,6 +150,9 @@ main(int argc, char **argv)
 			break;
 		case 'c':
 			read_count = (int)strtol(optarg, NULL, 0);
+			break;
+		case 'D':
+			disable_thscale = 1;
 			break;
 		case 'd':
 			debug = 1;
