@@ -310,9 +310,15 @@ main(int argc, char **argv)
 #ifdef AGURI2
 	/* XXX only works with '-r' */
 	if (interval == 0) {
+		/*
+		 * interval 0 is for debugging, re-read the file for
+		 * the second pass and make summary
+		 */
 		aguri2_setup();
 
 		if (dumpfile != NULL) {
+			if (dumpfile[0] == '-' && dumpfile[1] == '\0')
+				errx(1, "can't read from stdin when interval is 0");
 			pcap_fd = open_pcapfile(dumpfile, filter_cmd);
 			while (1) {
 				len = read_pcap(pcap_fd);
