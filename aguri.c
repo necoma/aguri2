@@ -152,7 +152,7 @@ main(int argc, char **argv)
 			read_count = (int)strtol(optarg, NULL, 0);
 			break;
 		case 'D':
-			disable_thscale = 1;
+			disable_thscale++;
 			break;
 		case 'd':
 			debug = 1;
@@ -431,6 +431,8 @@ static int read_flow(FILE *fp)
 	fprintf(stderr, "aguri2: reading flow info from stdin...\n");
 	while (1) {
 		if (fread(&agflow, sizeof(agflow), 1, fp) != 1) {
+			if (feof(fp))
+				return (0);
 			warn("fread failed!");
 			return (-1);
 		}

@@ -35,6 +35,7 @@
 #include <err.h>
 #include <inttypes.h>
 
+#include "aguri.h"  /* for disable_thscale */
 #include "aguri_tree.h"
 
 static struct tree_node *leaf_alloc(struct tree *tp, const void *key,
@@ -916,7 +917,26 @@ tnode_matchindex(struct tree *tp, const void *key, size_t len)
 	/* NOTREACHED */
 }
 
+/*
+ * are_similar() compares 2 nodes, and returns 1 if their counts
+ * differ less than 12.5% (diff < mean / 8)
+ * XXX only byte counts are used at the moment
+ */
 static int
+are_similar(struct tree_node *np, struct tree_node *np2)
+{
+	u_int64_t diff;
+
+	if (np->tn_count > np2->tn_count)
+		diff = np->tn_count - np2->tn_count;
+	else
+		diff = np2->tn_count - np->tn_count;
+	if (diff < ((np->tn_count + np2->tn_count) >> 4))
+		return 1;
+	return 0;
+}
+
+static inline int
 tnode_aggregate(struct tree_node *np, void *arg)
 {
 	u_int64_t thresh = *(u_int64_t *)arg;
@@ -931,6 +951,52 @@ tnode_aggregate(struct tree_node *np, void *arg)
 	thresh *= scale;
 	thresh2 *= scale;
 
+#if 1  /* experimental */
+	if (disable_thscale > 1 && np->tn_right != NULL) {
+		int merge_right = 0, merge_left = 0;
+		/*
+		 * heuristics to mitigate threshold sensitivity.
+		 * when children have similar counts, merge them.
+		 */
+		if (np->tn_right->tn_count > 0 &&
+		    np->tn_left->tn_count > 0 &&
+		    np->tn_right->tn_prefixlen ==
+		    np->tn_left->tn_prefixlen &&
+		    are_similar(np->tn_right, np->tn_left)) {
+			/* both children have same prefixlen and 
+			 * similar counts */
+			merge_right = merge_left = 1;
+		} else {
+			/* when one child is just below the threshold,
+			 * it's been already merged to this node.
+			 * so, check if this is the case */
+			if (np->tn_right->tn_count > 0 &&
+			    np->tn_left->tn_prefixlen == 
+			    np->tn_prefixlen + 1 &&
+			    are_similar(np, np->tn_right))
+				merge_right = 1;
+			else if (np->tn_left->tn_count > 0 &&
+			    np->tn_right->tn_prefixlen == 
+			    np->tn_prefixlen + 1 &&
+			    are_similar(np, np->tn_left))
+				merge_left = 1;
+		}
+		if (merge_right) {
+			np->tn_count += np->tn_right->tn_count;
+			np->tn_right->tn_count = 0;
+			np->tn_count2 += np->tn_right->tn_count2;
+			np->tn_right->tn_count2 = 0;
+			np->tn_right->tn_index = -1;
+		}
+		if (merge_left) {
+			np->tn_count += np->tn_left->tn_count;
+			np->tn_left->tn_count = 0;
+			np->tn_count2 += np->tn_left->tn_count2;
+			np->tn_left->tn_count2 = 0;
+			np->tn_left->tn_index = -1;
+		}
+	}
+#endif
 	/* if count is less than thresh, aggregate */
 	if (np->tn_parent != NULL
 		&& np->tn_count < thresh && np->tn_count2 < thresh2) {
