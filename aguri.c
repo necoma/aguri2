@@ -62,7 +62,7 @@ int lru_size = 1024;
 int plot_yscale = 1;
 int plot_inbps = 0;
 int verbose = 0;
-int disable_thscale = 0;
+int disable_heuristics = 0;
 
 static char *dumpfile = NULL;		/* tcpdump output file as input */
 static char *interface = NULL;
@@ -152,7 +152,7 @@ main(int argc, char **argv)
 			read_count = (int)strtol(optarg, NULL, 0);
 			break;
 		case 'D':
-			disable_thscale++;
+			disable_heuristics++;
 			break;
 		case 'd':
 			debug = 1;

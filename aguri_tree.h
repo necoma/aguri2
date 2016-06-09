@@ -59,7 +59,7 @@ struct tree {
 	u_int64_t	tr_count2;		/* aux count */
 	u_int	tr_epoch;			/* epoch for intervals */
 	int	tr_indices;			/* # of nodes with index */
-	u_int64_t	*tr_thscale;		/* threshold scaling table */
+	int	*tr_thscale;			/* threshold scaling table */
 #ifdef AGURI_STATS
 	struct {
 		u_int	hits;

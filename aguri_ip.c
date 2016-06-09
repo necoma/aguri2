@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2001-2015 WIDE Project.
+ * Copyright (C) 2001-2016 WIDE Project.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -80,40 +80,36 @@ struct dbl_counters *flow_matrix6 = NULL;
 
 int flow_num, flow_num6;
 
-/* threshold scaling gives bias according to the prefixlen */
-static u_int64_t addr_thscale[33] =
-    { 1, 64, 64, 64, 64, 64, 64, 64,
-     16, 32, 32, 32, 32, 16, 16, 16,
-      4,  8,  8,  8,  8,  8,  4,  4,
-      1,  4,  4,  4,  2,  2,  2,  4, 1};
-static u_int64_t addr6_thscale[129] =
-    {  1, 64, 64, 64,  8, 16, 16, 16,  8, 16, 16, 16,  8, 16, 16, 16,
-       8, 16, 16, 16,  8, 16, 16, 16,  8, 16, 16, 16,  8, 16, 16, 16,
-       4, 16, 16, 16,  8, 16, 16, 16,  8, 16, 16, 16,  8, 16, 16, 16,
-       2,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  2,  2,  2,  4,
-       1, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
-      64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
-      64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64,
-      64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 1};
-static u_int64_t proto_thscale[33] =
-    { 1, 64, 64, 64, 64, 64, 64, 64,
-     32, 32, 32, 32, 32, 16, 16, 16,
-     16, 64, 64, 64, 64, 32,  32,  16,
-     16, 16,  8,  8,  8,  8,  8,  8, 1};
-static u_int64_t flow_thscale[33] =
-    { 1, 64, 64, 64, 64, 64, 64, 64,
-     64, 64, 64, 64, 64, 64, 64, 64,
-     64, 64, 64, 64, 64, 64, 64, 64,
-     64, 64, 64, 64, 64, 64, 64, 64, 64};
-static u_int64_t no_thscale[129] =
-    {  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-       1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-       1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-       1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-       1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-       1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-       1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-       1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+/*
+ * threshold scaling gives bias according to the prefixlen
+ * for reducing the number of entries as well as for supressing
+ * unuseful entries for operational practices.
+ * threshold is increased by "thresh <<= thscale[prefixlen]"
+ */
+static int addr_thscale[33] =
+    { 0, 6, 6, 6, 6, 6, 6, 6,
+      3, 5, 5, 5, 5, 4, 4, 4,
+      2, 3, 3, 3, 2, 2, 2, 2,
+      0, 1, 1, 1, 1, 1, 1, 2, 0};
+static int addr6_thscale[129] =
+    { 0, 6, 6, 6, 3, 4, 4, 4, 3, 4, 4, 4, 3, 4, 4, 4,
+      3, 4, 4, 4, 3, 4, 4, 4, 3, 4, 4, 4, 3, 4, 4, 4,
+      2, 4, 4, 4, 3, 4, 4, 4, 3, 4, 4, 4, 3, 4, 4, 4,
+      1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1,
+      0, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+      6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+      6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+      6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 0};
+static int proto_thscale[33] =
+    { 0, 6, 6, 6, 6, 6, 6, 6,
+      1, 5, 5, 5, 5, 5, 4, 4,
+      0, 6, 6, 6, 6, 5, 5, 4,
+      4, 4, 3, 3, 3, 3, 3, 2, 0};
+static int flow_thscale[33] =
+    { 0, 6, 6, 6, 6, 6, 6, 6,
+      6, 6, 6, 6, 6, 6, 6, 6,
+      6, 6, 6, 6, 6, 6, 6, 6,
+      6, 6, 6, 6, 6, 6, 6, 6, 6};
 
 static void ip_nodename(struct tree_node *np, char *buf, size_t len);
 static u_int64_t ip_addrparser(char *buf, void *key,
@@ -302,62 +298,38 @@ ipinfo_init(void)
 
 	if (addr_src != NULL) {
 		tree_init(addr_src, 32, lru_size);
-		if (disable_thscale == 0)
-			addr_src->tr_thscale = addr_thscale;
-		else
-			addr_src->tr_thscale = no_thscale;
+		addr_src->tr_thscale = addr_thscale;
 	}
 	if (addr6_src != NULL) {
 		tree_init(addr6_src, 128, lru_size);
-		if (disable_thscale == 0)
-			addr6_src->tr_thscale = addr6_thscale;
-		else
-			addr6_src->tr_thscale = no_thscale;
+		addr6_src->tr_thscale = addr6_thscale;
 	}
 	if (addr_dst != NULL) {
 		tree_init(addr_dst, 32, lru_size);
-		if (disable_thscale == 0)
-			addr_dst->tr_thscale = addr_thscale;
-		else
-			addr_dst->tr_thscale = no_thscale;
+		addr_dst->tr_thscale = addr_thscale;
 	}
 	if (addr6_dst != NULL) {
 		tree_init(addr6_dst, 128, lru_size);
-		if (disable_thscale == 0)
-			addr6_dst->tr_thscale = addr6_thscale;
-		else
-			addr6_dst->tr_thscale = no_thscale;
+		addr6_dst->tr_thscale = addr6_thscale;
 	}
 
 	/* fix the lru_size to 512 for protocols */
 	if (proto_src != NULL) {
 		tree_init(proto_src, 8+8+16, 512);
-		if (disable_thscale == 0)
-			proto_src->tr_thscale = proto_thscale;
-		else
-			proto_src->tr_thscale = no_thscale;
+		proto_src->tr_thscale = proto_thscale;
 	}
 	if (proto_dst != NULL) {
 		tree_init(proto_dst, 8+8+16, 512);
-		if (disable_thscale == 0)
-			proto_dst->tr_thscale = proto_thscale;
-		else
-			proto_dst->tr_thscale = no_thscale;
+		proto_dst->tr_thscale = proto_thscale;
 	}
 	/* XXX: agr_flows should be large enough not to get aggregated */
 	if (agr_flows != NULL) {
 		tree_init(agr_flows, 32, 4096 * 4);
-		if (disable_thscale == 0)
-			agr_flows->tr_thscale = flow_thscale;
-		else
-			agr_flows->tr_thscale = no_thscale;
+		agr_flows->tr_thscale = flow_thscale;
 	}
 	if (agr_flows6 != NULL) {
 		tree_init(agr_flows6, 32, 4096 * 4);
-		if (disable_thscale == 0)
-			agr_flows6->tr_thscale = flow_thscale;
-		else
-			agr_flows6->tr_thscale = no_thscale;
+		agr_flows6->tr_thscale = flow_thscale;
 	}
 	return (0);
 }

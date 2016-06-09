@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2001-2015 WIDE Project.
+ * Copyright (C) 2001-2016 WIDE Project.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,8 +35,9 @@
 #include <err.h>
 #include <inttypes.h>
 
-#include "aguri.h"  /* for disable_thscale */
 #include "aguri_tree.h"
+
+extern int disable_heuristics;
 
 static struct tree_node *leaf_alloc(struct tree *tp, const void *key,
 			     struct tree_node *np);
@@ -941,18 +942,19 @@ tnode_aggregate(struct tree_node *np, void *arg)
 {
 	u_int64_t thresh = *(u_int64_t *)arg;
 	u_int64_t thresh2 = *((u_int64_t *)arg + 1);
-	u_int64_t scale;
 
 	if (thresh == 0)
 		thresh = 1;
 	if (thresh2 == 0)
 		thresh2 = 1;
-	scale = np->tn_tree->tr_thscale[np->tn_prefixlen];
-	thresh *= scale;
-	thresh2 *= scale;
+	if ((disable_heuristics & 1) == 0) {
+		int scale = np->tn_tree->tr_thscale[np->tn_prefixlen];
+		thresh  <<= scale;
+		thresh2 <<= scale;
+	}
 
 #if 1  /* experimental */
-	if (disable_thscale > 1 && np->tn_right != NULL) {
+	if ((disable_heuristics & 2) == 0 && np->tn_right != NULL) {
 		int merge_right = 0, merge_left = 0;
 		/*
 		 * heuristics to mitigate threshold sensitivity.

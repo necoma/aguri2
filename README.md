@@ -24,13 +24,21 @@ See 'scripts/README.md' for more detail.
 
 ## Usage
 
-	aguri2 [-dhv] [-c count] [-i interface] [-f pcapfilters] [-l nodes]
+	aguri2 [-Ddhv] [-c count] [-i interface] [-f pcapfilters] [-l nodes]
 		[-p pidfile] [-r pcapfile] [-s interval] [-T timeoffset]
 		[-t thresh] [-w outputfile]
 
   + `-c count`:  
     Exit after processing count packets.
 
+  + `-D`: Disable heuristics for aggregation.
+      -D disables the threshold scaling that gives bias according to
+      the prefixlength for reducing the number of entries as well as
+      for supressing unuseful entries for operational practices.
+      -DD disables merging nodes with similar counts that mitigates
+      threshold sensitivity.
+      -DDD disables both heuristics.
+  
   + `-d`: Enable debug outputs.
   
   + `-i interface`:  

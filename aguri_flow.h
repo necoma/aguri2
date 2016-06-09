@@ -27,6 +27,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * aguri flow entry format.
+ * aguri_xflow converts netflow/sflow entries into this format.
+ * all fields are in the network byte order.
+ */
 struct flow_spec {
 	u_int32_t  fs_srcaddr[4];	/* source IPv4/IPv6 address */
 	u_int32_t  fs_dstaddr[4];	/* destination IPv4/IPv6 address */

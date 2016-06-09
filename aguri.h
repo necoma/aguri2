@@ -38,4 +38,4 @@ extern int lru_size;
 extern int plot_yscale;
 extern int plot_inbps;
 extern int verbose;
-extern int disable_thscale;
+extern int disable_heuristics;
