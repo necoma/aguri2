@@ -235,7 +235,11 @@ check_agent(struct sockaddr *sa)
 	ap->agent_id = id4agent++;
 	if (ignore)
 		ap->agent_id = 0 - ap->agent_id; /* set the negative value */
-	memcpy(&ap->agent_addr, sa, sa->sa_len);
+#if 1	/* for linux */
+	memcpy(&ap->agent_addr, sa, sizeof(struct sockaddr_storage));
+#else
+	memcpy(&ap->agent_addr, sa, sa->sa_len));
+#endif
 	LIST_INSERT_HEAD(&agent_head, ap, entries);
 
 	cur_agentid = ap->agent_id;  /* save agent_id */
@@ -265,6 +269,13 @@ read_from_socket(void)
 	for (res = res0; res != NULL; res = res->ai_next) {
 		if ((s = socket(res->ai_family, res->ai_socktype, res->ai_protocol)) < 0)
 			err(1, "socket");
+		if (res->ai_family == AF_INET6) {
+			/* need to set V6ONLY to fix EADDRINUSE on linux */
+			int on = 1;
+			if (setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY, 
+			    &on, sizeof(on)) < 0)
+				err(1, "setsockopt: V6ONLY");
+		}
 		if (bind(s, res->ai_addr, res->ai_addrlen) < 0)
 			err(1, "bind");
 
