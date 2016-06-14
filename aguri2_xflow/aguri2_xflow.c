@@ -84,7 +84,7 @@ char	buffer[8192];	/* buffer for flow datagram */
 static void usage(void);
 static void *sockaddr2addr(const struct sockaddr *sa, int *plen);
 static int is_addr_equal(const struct sockaddr *a, const struct sockaddr *b);
-static int check_agent(struct sockaddr *sa);
+static int check_agent(struct sockaddr *sa, socklen_t sa_len);
 int	read_from_socket(void);
 
 static	void
@@ -179,7 +179,7 @@ is_addr_equal(const struct sockaddr *a, const struct sockaddr *b)
 }
 
 static int
-check_agent(struct sockaddr *sa)
+check_agent(struct sockaddr *sa, socklen_t sa_len)
 {
 	struct agent_info *ap;
 	char name[INET6_ADDRSTRLEN];
@@ -235,11 +235,7 @@ check_agent(struct sockaddr *sa)
 	ap->agent_id = id4agent++;
 	if (ignore)
 		ap->agent_id = 0 - ap->agent_id; /* set the negative value */
-#if 1	/* for linux */
-	memcpy(&ap->agent_addr, sa, sizeof(struct sockaddr_storage));
-#else
-	memcpy(&ap->agent_addr, sa, sa->sa_len));
-#endif
+	memcpy(&ap->agent_addr, sa, sa_len);
 	LIST_INSERT_HEAD(&agent_head, ap, entries);
 
 	cur_agentid = ap->agent_id;  /* save agent_id */
@@ -321,7 +317,7 @@ read_from_socket(void)
 			continue;
 		}
 
-		if (check_agent((struct sockaddr *)&from_addr) < 0)
+		if (check_agent((struct sockaddr *)&from_addr, fromlen) < 0)
 			continue;
 
 		if (flow_type == FLOWTYPE_SFLOW)
