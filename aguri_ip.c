@@ -896,6 +896,10 @@ null_counter(struct tree *tp, void *key, size_t prefixlen,
 {
 }
 
+/*
+ * aguri2_setup allocates flow_matrices to be used in the next
+ * interval, and resets the counters in the trees.
+ */
 int
 aguri2_setup(void)
 {
@@ -930,6 +934,23 @@ aguri2_setup(void)
 		}
 	}
 #endif
+	/* reset counters in the trees */
+	if (addr_src != NULL)
+		tree_resetcount(addr_src);
+#ifdef INET6
+	if (addr6_src != NULL)
+		tree_resetcount(addr6_src);
+#endif
+	if (addr_dst != NULL)
+		tree_resetcount(addr_dst);
+#ifdef INET6
+	if (addr6_dst != NULL)
+		tree_resetcount(addr6_dst);
+#endif
+	if (proto_src != NULL)
+		tree_resetcount(proto_src);
+	if (proto_dst != NULL)
+		tree_resetcount(proto_dst);
 	return (0);
 }
 
@@ -955,6 +976,19 @@ flow_comp(const void *p0, const void *p1)
 	return (0);
 }
 
+/*
+ * aguri2_summary produces flow summary outputs:
+ *  - flow_matrix[src_index][dst_index] holds byte and packet counts
+ *  - create flow_entries (array) to compress the sparse flow_matrix
+ *    - create rindex_xxx: mapping from index to tree_node
+ *    - walk through flow_matrix and fill flow_entries
+ *  - sort flow_entries by counts (using the larger count)
+ *  - walk through the sorted flow_entries to produce outputs
+ *    - for protocol counts, they are bookkept in the agr_flow trees
+ *      using 4 byte key [src_index][dst_index][sport_index][dport_index]
+ *    - walk through the subtree at [src_index][dst_index] to produce
+ *      protocol outputs for the flow
+ */
 #define RINDEX_IPV4	0
 #define RINDEX_IPV6	1
 

@@ -112,19 +112,6 @@ int agflow_doheader(const struct aguri_flow *agf)
 		
 		aguri2_setup();
 
-		if (addr_src != NULL)
-			tree_resetcount(addr_src);
-		if (addr6_src != NULL)
-			tree_resetcount(addr6_src);
-		if (addr_dst != NULL)
-			tree_resetcount(addr_dst);
-		if (addr6_dst != NULL)
-			tree_resetcount(addr6_dst);
-		if (proto_src != NULL)
-			tree_resetcount(proto_src);
-		if (proto_dst != NULL)
-			tree_resetcount(proto_dst);
-
 		start_time.tv_sec = next_interval;
 		next_interval += interval;
 	}
