@@ -38,3 +38,5 @@ int print_flow(struct aguri_flow *afp);
 int nf9_parse_template(const char *bp, size_t len, int source_id);
 int nf9_parse_options(const char *bp, size_t len, int source_id);
 int nf9_parse_data(const char *bp, size_t len, int source_id, uint32_t boottime);
+void etherhdr_parse(const char *p, int len);
+void pcap_read(const char *dumpfile, const char *interface, const char *filter_cmd, int snaplen);

@@ -55,7 +55,7 @@
 
 #define FLOWTYPE_SFLOW		1
 #define FLOWTYPE_NETFLOW	2
-
+#define FLOWTYPE_PCAP		3
 
 #ifndef INFTIM	/* for linux */
 #define	INFTIM		(-1)
@@ -80,6 +80,12 @@ int	family = AF_UNSPEC;	/* address family */
 int	cur_agentid = 0;	/* current agent id */
 char	*agentname = NULL;
 char	buffer[8192];	/* buffer for flow datagram */
+#ifdef PCAP
+const char *dumpfile = NULL;
+const char *interface = NULL;
+const char *filter_cmd = NULL;
+int	snaplen = 0;
+#endif
 
 static void usage(void);
 static void *sockaddr2addr(const struct sockaddr *sa, int *plen);
@@ -91,7 +97,11 @@ static	void
 usage(void)
 {
 	fprintf(stderr,
-	    "usage: aguri2_xflow -46dhv [-t sflow | netflow] [-p port] [-s sampling_rate] [-a agent]\n");
+	    "usage: aguri2_xflow [-46dhv] [-t sflow | netflow] [-p port] [-s sampling_rate] [-a agent]\n");
+#ifdef PCAP
+	fprintf(stderr,
+	    "       aguri2_xflow [-dhv] -t pcap [-i interface] [-r dumpfile] [-f filter_cmd] [-s snaplen]\n");
+#endif	
 	exit(1);
 }
 
@@ -101,7 +111,7 @@ main(int argc, char **argv)
 	int	i;
 	char	*flow_typename = NULL;
 
-	while ((i = getopt(argc, argv, "46a:dp:s:t:v")) != -1) {
+	while ((i = getopt(argc, argv, "46a:df:i:p:r:s:t:v")) != -1) {
 		switch (i) {
 		case '4':
 			family = AF_INET;
@@ -115,11 +125,27 @@ main(int argc, char **argv)
 		case 'd':
 			debug++;
 			break;
+#ifdef PCAP
+	        case 'f':
+			filter_cmd = optarg;
+			break;
+	        case 'i':
+			interface = optarg;
+			break;
+#endif
 	        case 'p':
 			port = atoi(optarg);
 			break;
+#ifdef PCAP
+	        case 'r':
+			dumpfile = optarg;
+			break;
+#endif
 	        case 's':
 			default_samprate = atoi(optarg);
+#ifdef PCAP
+			snaplen = atoi(optarg);
+#endif			
 			break;
 	        case 't':
 			flow_typename = optarg;
@@ -139,9 +165,19 @@ main(int argc, char **argv)
 		flow_type = FLOWTYPE_NETFLOW;
 		if (port == 0)
 			port = netflow_defport;
+#ifdef PCAP
+	} else if (strcasecmp(flow_typename, "pcap") == 0) {
+		flow_type = FLOWTYPE_PCAP;
+#endif		
 	} else
 		usage();
-	
+
+#ifdef PCAP
+	if (flow_type == FLOWTYPE_PCAP) {
+		pcap_read(dumpfile, interface, filter_cmd, snaplen);
+		return (0);
+	}
+#endif	
 	read_from_socket();
 
 	return (0);

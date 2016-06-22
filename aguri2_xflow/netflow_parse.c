@@ -53,7 +53,7 @@ struct netflow_common_header {
 	u_int16_t count;
 };
 
-static struct aguri_flow aguri_flow;
+extern struct aguri_flow aguri_flow;
 
 static void netflow_v5_parse(const char *bp, size_t len);
 static void netflow_v9_parse(const char *bp, size_t len);

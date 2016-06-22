@@ -80,7 +80,7 @@ static int read_ip6hdr(struct ip6_hdr *ip6, int *proto, int len);
 static int do_ip6nexthdr(int proto, const char *bp, int len);
 #endif
 
-extern struct aguri_flow aguri_flow;
+struct aguri_flow aguri_flow;
 
 struct ip4_frag {
     TAILQ_ENTRY(ip4_frag) ip4f_chain;

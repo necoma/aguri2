@@ -51,12 +51,13 @@
 #include "../aguri_flow.h"
 #include "aguri2_xflow.h"
 
+extern struct aguri_flow aguri_flow;
+
 u_int32_t sflow_version;
 const char *endp;	/* end of the current sflow datagram */
 const char *snapend;	/* end of the current sample record */
 int	frame_length;   /* frame length of the current sampled paccket */
 int	sampling_rate;	/* current sampling rate */
-struct aguri_flow aguri_flow;
 time_t	timestamp;	/* timestamp for the current sflow datagram */
 
 u_int32_t buffer_read_4(const char **p);
@@ -64,8 +65,6 @@ u_int32_t buffer_skip(const char **pp, int len);
 int parse_sflow_datagram(const char *bp, int len);
 int parse_sflow4_sample(const char **p);
 int parse_sflow5(const char **p);
-
-extern void etherhdr_parse(const char *p, int len);
 
 u_int32_t
 buffer_read_4(const char **p)
