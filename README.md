@@ -1,6 +1,8 @@
 # aguri2
-========
+
 The primary aggregation tools for agurim
+
+Note: this tool is obsoleted by aguri3 included in agurim.
 
 aguri2 is the primary aggregation tool for agurim.
 aguri2 can produce aggregated flow records using the pcap library, or
